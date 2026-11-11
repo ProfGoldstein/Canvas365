@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetTutor Prompt Generator & Socratic Sandbox</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        net: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .var-highlight {
+            background-color: #fef08a;
+            color: #854d0e;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col selection:bg-net-500 selection:text-white">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 ease-out bg-slate-800 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3">
+        <div id="toast-icon" class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm font-bold">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div>
+            <div id="toast-title" class="text-xs font-bold text-slate-200">Success</div>
+            <div id="toast-message" class="text-xs text-slate-400">Prompt copied to clipboard!</div>
+        </div>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="bg-slate-950/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand Title -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-net-600 to-cyan-400 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-net-600/30">
+                        <i class="fa-solid fa-network-wired"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white text-base sm:text-lg leading-tight flex items-center gap-2">
+                            NetTutor <span class="bg-net-500/20 text-net-400 text-xs px-2 py-0.5 rounded-md border border-net-500/30 font-mono">Socratic Prompt Studio</span>
+                        </h1>
+                        <p class="text-xs text-slate-400 hidden sm:block">Introductory Networking Course Prompt Generator</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <div class="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800">
+                    <button onclick="switchTab('generator')" id="tab-btn-generator" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all bg-net-600 text-white shadow-md">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Prompt Studio
+                    </button>
+                    <button onclick="switchTab('sandbox')" id="tab-btn-sandbox" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">
+                        <i class="fa-solid fa-robot mr-1.5"></i>Interactive Sandbox
+                    </button>
+                    <button onclick="switchTab('educator')" id="tab-btn-educator" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">
+                        <i class="fa-solid fa-sliders mr-1.5"></i>Educator Panel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+        <!-- TAB 1: PROMPT GENERATOR & LIVE PREVIEW -->
+        <div id="tab-generator" class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+            
+            <!-- LEFT PANEL: Student Input Form (5 cols) -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-xl space-y-5">
+                    <div class="border-b border-slate-800 pb-4">
+                        <h2 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-user-graduate text-net-400"></i> Student Information
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">Fill in your name and select your networking topic below.</p>
+                    </div>
+
+                    <!-- 1. Student Name -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                            Student Name <span class="text-rose-400">*</span>
+                        </label>
+                        <div class="relative">
+                            <i class="fa-solid fa-signature absolute left-3.5 top-3 text-slate-500 text-sm"></i>
+                            <input type="text" id="input-student-name" value="Alex" oninput="renderPrompt()" placeholder="e.g. Alex Rivera" class="w-full bg-slate-900 border border-slate-700 focus:border-net-500 focus:ring-1 focus:ring-net-500 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white outline-none transition-all placeholder:text-slate-600">
+                        </div>
+                    </div>
+
+                    <!-- 2. Networking Topic Selection -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                            Networking Topic Selection <span class="text-rose-400">*</span>
+                        </label>
+                        <div class="relative">
+                            <select id="select-topic" onchange="handleTopicChange()" class="w-full bg-slate-900 border border-slate-700 focus:border-net-500 focus:ring-1 focus:ring-net-500 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none transition-all appearance-none cursor-pointer">
+                                <!-- Options dynamically rendered -->
+                            </select>
+                            <i class="fa-solid fa-chevron-down absolute right-3.5 top-3.5 text-slate-500 pointer-events-none text-xs"></i>
+                        </div>
+                    </div>
+
+                    <!-- Custom Topic Field (Hidden by default) -->
+                    <div id="custom-topic-container" class="hidden">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-net-400 mb-1.5">
+                            Custom Topic Name
+                        </label>
+                        <input type="text" id="input-custom-topic" oninput="renderPrompt()" placeholder="e.g. Subnetting & CIDR notation" class="w-full bg-slate-900 border border-net-500/50 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
+                    </div>
+
+                    <!-- 3. Optional Interest / Hobby -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                                Personal Interest / Hobby
+                            </label>
+                            <span class="text-[10px] text-slate-500 uppercase font-semibold">Optional</span>
+                        </div>
+                        <div class="relative">
+                            <i class="fa-solid fa-gamepad absolute left-3.5 top-3 text-slate-500 text-sm"></i>
+                            <input type="text" id="input-interest" value="video gaming" oninput="renderPrompt()" placeholder="e.g. Gaming, Basketball, Baking, Photography" class="w-full bg-slate-900 border border-slate-700 focus:border-net-500 focus:ring-1 focus:ring-net-500 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white outline-none transition-all placeholder:text-slate-600">
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1.5">The AI tutor will use your interest to build tailored practice scenario questions!</p>
+                    </div>
+
+                    <!-- Quick Demo Filler -->
+                    <div class="pt-2">
+                        <button onclick="loadSampleStudent()" class="w-full bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/60 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-dice text-net-400"></i> Load Sample Student Demo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Guidance Box -->
+                <div class="bg-net-950/40 border border-net-800/50 p-5 rounded-2xl text-xs text-net-200/80 space-y-2">
+                    <div class="font-bold text-net-300 flex items-center gap-2 text-sm">
+                        <i class="fa-solid fa-circle-info text-net-400"></i> How to use this prompt:
+                    </div>
+                    <ol class="list-decimal list-inside space-y-1 text-slate-300 leading-relaxed">
+                        <li>Fill out your student information on the left.</li>
+                        <li>Click <strong>Copy Complete Prompt</strong>.</li>
+                        <li>Paste directly into <strong>ChatGPT</strong>, <strong>Claude</strong>, or <strong>Gemini</strong>.</li>
+                        <li>Or click <strong>Test in Interactive Sandbox</strong> to preview the experience right inside this app!</li>
+                    </ol>
+                </div>
+
+            </div>
+
+            <!-- RIGHT PANEL: Generated Prompt & Launch Hub (7 cols) -->
+            <div class="lg:col-span-7 space-y-6 flex flex-col">
+                
+                <div class="bg-slate-950 rounded-2xl border border-slate-800 shadow-xl flex-1 flex flex-col overflow-hidden">
+                    
+                    <!-- Top Output Action Bar -->
+                    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between flex-wrap gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                            <h2 class="text-xs font-bold tracking-wider uppercase text-slate-200">Generated Socratic Prompt</h2>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button onclick="copyPromptToClipboard()" class="bg-net-600 hover:bg-net-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-net-600/30 transition-all active:scale-95">
+                                <i class="fa-regular fa-copy"></i> Copy Prompt
+                            </button>
+                            <button onclick="launchSandboxWithCurrentData()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-emerald-600/30 transition-all active:scale-95">
+                                <i class="fa-solid fa-play"></i> Test in Sandbox
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Prompt Text Preview Container -->
+                    <div class="p-6 flex-1 flex flex-col justify-between bg-slate-950 font-mono">
+                        <div id="prompt-preview-rendered" class="bg-slate-900/90 border border-slate-800 p-5 rounded-xl text-sm text-slate-200 leading-relaxed whitespace-pre-wrap select-all font-sans">
+                            <!-- Injected live via JS -->
+                        </div>
+
+                        <!-- Footer stats -->
+                        <div class="mt-6 flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-slate-900">
+                            <span id="prompt-char-count">0 characters</span>
+                            <span class="flex items-center gap-1"><i class="fa-solid fa-shield-halved text-emerald-500"></i> Introductory Top-Down Networking Standard</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Quick Launch Hub -->
+                <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 shadow-xl">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
+                        <span><i class="fa-solid fa-rocket text-net-400 mr-1.5"></i> One-Click Launch in AI Platform</span>
+                        <span class="text-[10px] text-slate-500 font-normal">Copies prompt & opens site</span>
+                    </h3>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <button onclick="launchExternalAI('chatgpt')" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-3 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold text-slate-200 transition-all group">
+                            <i class="fa-solid fa-bolt text-emerald-400 group-hover:scale-110 transition-transform"></i> ChatGPT
+                        </button>
+                        <button onclick="launchExternalAI('claude')" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-3 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold text-slate-200 transition-all group">
+                            <i class="fa-solid fa-brain text-amber-400 group-hover:scale-110 transition-transform"></i> Claude
+                        </button>
+                        <button onclick="launchExternalAI('gemini')" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-3 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold text-slate-200 transition-all group">
+                            <i class="fa-solid fa-sparkles text-cyan-400 group-hover:scale-110 transition-transform"></i> Gemini
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- TAB 2: INTERACTIVE AI TUTOR SANDBOX -->
+        <div id="tab-sandbox" class="hidden space-y-6">
+            
+            <!-- Sandbox Header Banner -->
+            <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-xl flex items-center justify-between flex-wrap gap-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs px-2.5 py-0.5 rounded-full font-semibold flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Active Simulation
+                        </span>
+                        <h2 class="text-base font-bold text-white">Socratic Networking Tutor Sandbox</h2>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">Experience how the generated AI Tutor workflow responds step-by-step!</p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="resetSandboxSimulation()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all">
+                        <i class="fa-solid fa-rotate-right mr-1.5"></i> Restart Tutor
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stepper Progress Tracker -->
+            <div class="grid grid-cols-4 gap-3">
+                <div id="step-indicator-1" class="bg-net-600/20 border border-net-500/40 p-3 rounded-xl flex items-center gap-3 transition-all">
+                    <div class="w-7 h-7 rounded-lg bg-net-600 text-white font-bold text-xs flex items-center justify-center shrink-0">1</div>
+                    <div class="hidden sm:block">
+                        <div class="text-xs font-bold text-white">The Lesson</div>
+                        <div class="text-[10px] text-net-300">3 Key Ideas + Example</div>
+                    </div>
+                </div>
+                <div id="step-indicator-2" class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex items-center gap-3 transition-all opacity-50">
+                    <div class="w-7 h-7 rounded-lg bg-slate-800 text-slate-400 font-bold text-xs flex items-center justify-center shrink-0">2</div>
+                    <div class="hidden sm:block">
+                        <div class="text-xs font-bold text-slate-300">Practice</div>
+                        <div class="text-[10px] text-slate-500">Scenario Question</div>
+                    </div>
+                </div>
+                <div id="step-indicator-3" class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex items-center gap-3 transition-all opacity-50">
+                    <div class="w-7 h-7 rounded-lg bg-slate-800 text-slate-400 font-bold text-xs flex items-center justify-center shrink-0">3</div>
+                    <div class="hidden sm:block">
+                        <div class="text-xs font-bold text-slate-300">Socratic Feedback</div>
+                        <div class="text-[10px] text-slate-500">Hints & Guidance</div>
+                    </div>
+                </div>
+                <div id="step-indicator-4" class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex items-center gap-3 transition-all opacity-50">
+                    <div class="w-7 h-7 rounded-lg bg-slate-800 text-slate-400 font-bold text-xs flex items-center justify-center shrink-0">4</div>
+                    <div class="hidden sm:block">
+                        <div class="text-xs font-bold text-slate-300">Grade Report</div>
+                        <div class="text-[10px] text-slate-500">Score / 10 & Pro Tip</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulated AI Chat Interface -->
+            <div class="bg-slate-950 rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+                <!-- Chat Log -->
+                <div id="chat-conversation-log" class="p-6 space-y-6 max-h-[500px] overflow-y-auto">
+                    <!-- Dynamic chat messages injected here -->
+                </div>
+
+                <!-- Input Box area for Student Practice -->
+                <div id="sandbox-input-area" class="p-4 bg-slate-900 border-t border-slate-800 flex items-center gap-3">
+                    <input type="text" id="sandbox-user-input" placeholder="Type your answer to the practice question..." onkeypress="if(event.key === 'Enter') submitSandboxAnswer()" class="flex-1 bg-slate-950 border border-slate-700 focus:border-net-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none">
+                    <button onclick="submitSandboxAnswer()" class="bg-net-600 hover:bg-net-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all flex items-center gap-1.5 shrink-0">
+                        Submit Answer <i class="fa-solid fa-paper-plane text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- TAB 3: EDUCATOR PANEL -->
+        <div id="tab-educator" class="hidden space-y-6">
+            
+            <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-xl">
+                <h2 class="text-base font-bold text-white mb-1 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-net-400"></i> Educator & Course Configuration
+                </h2>
+                <p class="text-xs text-slate-400 mb-6">Customize default topics or adjust the master prompt template used by your students.</p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    <!-- Topic List Manager -->
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Manage Dropdown Topics</h3>
+                            <button onclick="openAddTopicModal()" class="text-xs bg-net-600 hover:bg-net-500 text-white px-3 py-1 rounded-lg font-semibold transition-all">
+                                + Add Topic
+                            </button>
+                        </div>
+
+                        <div id="educator-topics-list" class="space-y-2">
+                            <!-- Dynamic topic list items injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Template Rule Manager -->
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Master Prompt Template Structure</h3>
+                            <button onclick="resetTemplateToDefault()" class="text-xs text-slate-400 hover:text-slate-200">
+                                Reset Default
+                            </button>
+                        </div>
+
+                        <textarea id="educator-template-editor" rows="10" oninput="saveEducatorTemplate()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-slate-200 font-mono leading-relaxed outline-none focus:border-net-500"></textarea>
+                        <p class="text-[11px] text-slate-500">Available variables: <code>&lt;name&gt;</code>, <code>&lt;drop-down-list selection&gt;</code>, <code>&lt;interest&gt;</code></p>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- MODAL: ADD TOPIC -->
+    <div id="modal-add-topic" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-800">
+            <h3 class="text-base font-bold text-white mb-1">Add Course Topic</h3>
+            <p class="text-xs text-slate-400 mb-4">Enter a new topic module to include in student selection.</p>
+
+            <form onsubmit="handleAddTopic(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Topic Title</label>
+                    <input type="text" id="new-topic-title" required placeholder="e.g. OSPF Routing Concepts" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:border-net-500 outline-none">
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3">
+                    <button type="button" onclick="closeAddTopicModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-semibold bg-net-600 hover:bg-net-500 text-white rounded-xl shadow-lg">Add to Dropdown</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Engine -->
+    <script>
+        /**
+         * DEFAULT STATE & CONFIGURATION
+         */
+        const DEFAULT_TEMPLATE = `I am <name>, a beginner in an introductory top-down networking college course. 
+Please act as my personal networking tutor and help me learn about <drop-down-list selection>.
+
+Follow these instructions in order:
+
+1. The Lesson: Give me a short bullet-list summary of the three most important ideas, with one simple example.
+
+2. Interactive Practice: Ask me one networking question using a scenario based on my interest<interest_clause>.
+
+3. The Socratic Method: If I make a mistake, do not give me the answer. Give me a 'Hint' and a 'Why it matters' explanation, then let me try again.
+
+4. Grade Report: After I solve the question, show me a 'Grade Report' with my name and a score out of 10 points, plus one 'Pro Tip' for improving my answer.
+
+Constraints: Only use concepts from a typical introductory top-down networking textbook. Explain any new concept in a way a beginner can follow.
+
+Please start with the Lesson.`;
+
+        const state = {
+            topics: [
+                "Ethernet switching and MAC address tables",
+                "Ethernet switching and how it differs from hubs",
+                "VLAN and Trunking"
+            ],
+            studentName: "Alex",
+            selectedTopic: "Ethernet switching and MAC address tables",
+            customTopic: "",
+            interest: "video gaming",
+            template: DEFAULT_TEMPLATE,
+            
+            // Sandbox State
+            sandboxStep: 1, // 1: Lesson, 2: Question asked, 3: Socratic Hint, 4: Graded
+            sandboxAttempts: 0
+        };
+
+        // DOM Initializer
+        window.addEventListener('DOMContentLoaded', () => {
+            renderTopicDropdown();
+            renderPrompt();
+            renderEducatorTopics();
+            document.getElementById('educator-template-editor').value = state.template;
+        });
+
+        /**
+         * TAB SWITCHING
+         */
+        function switchTab(tabName) {
+            const tabs = ['generator', 'sandbox', 'educator'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                const view = document.getElementById(`tab-${t}`);
+                if (t === tabName) {
+                    btn.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all bg-net-600 text-white shadow-md";
+                    view.classList.remove('hidden');
+                } else {
+                    btn.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all";
+                    view.classList.add('hidden');
+                }
+            });
+
+            if (tabName === 'sandbox') {
+                initSandboxSimulation();
+            }
+        }
+
+        /**
+         * TOPIC DROPDOWN RENDERING
+         */
+        function renderTopicDropdown() {
+            const select = document.getElementById('select-topic');
+            let html = state.topics.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+            html += `<option value="CUSTOM_TOPIC">+ Enter Custom Topic...</option>`;
+            select.innerHTML = html;
+            select.value = state.selectedTopic;
+        }
+
+        function handleTopicChange() {
+            const select = document.getElementById('select-topic');
+            const customContainer = document.getElementById('custom-topic-container');
+            
+            if (select.value === 'CUSTOM_TOPIC') {
+                customContainer.classList.remove('hidden');
+                state.selectedTopic = document.getElementById('input-custom-topic').value || 'Custom Topic';
+            } else {
+                customContainer.classList.add('hidden');
+                state.selectedTopic = select.value;
+            }
+            renderPrompt();
+        }
+
+        function loadSampleStudent() {
+            document.getElementById('input-student-name').value = "Jordan";
+            document.getElementById('select-topic').value = "VLAN and Trunking";
+            document.getElementById('input-interest').value = "basketball strategy";
+            handleTopicChange();
+            showToast("Sample student loaded!", "success");
+        }
+
+        /**
+         * PROMPT MERGER & RENDERER
+         */
+        function buildPromptString() {
+            const name = document.getElementById('input-student-name').value.trim() || "<name>";
+            
+            let topic = state.selectedTopic;
+            if (document.getElementById('select-topic').value === 'CUSTOM_TOPIC') {
+                topic = document.getElementById('input-custom-topic').value.trim() || "<custom topic>";
+            }
+
+            const interest = document.getElementById('input-interest').value.trim();
+            const interestClause = interest ? ` (${interest})` : "";
+
+            let prompt = state.template;
+            prompt = prompt.replace(/<name>/g, name);
+            prompt = prompt.replace(/<drop-down-list selection>/g, topic);
+            prompt = prompt.replace(/<interest_clause>/g, interestClause);
+
+            return prompt;
+        }
+
+        function renderPrompt() {
+            state.studentName = document.getElementById('input-student-name').value.trim() || "Student";
+            const fullPrompt = buildPromptString();
+            
+            const previewEl = document.getElementById('prompt-preview-rendered');
+            previewEl.textContent = fullPrompt;
+
+            document.getElementById('prompt-char-count').textContent = `${fullPrompt.length} characters`;
+        }
+
+        /**
+         * COPY & LAUNCH ACTIONS
+         */
+        function copyPromptToClipboard() {
+            const promptText = buildPromptString();
+            executeCopy(promptText);
+        }
+
+        function executeCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast("Prompt copied to clipboard!", "success");
+            } catch (err) {
+                showToast("Failed to copy text", "error");
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+
+        function launchExternalAI(platform) {
+            copyPromptToClipboard();
+            
+            let url = "";
+            if (platform === 'chatgpt') url = "https://chatgpt.com";
+            else if (platform === 'claude') url = "https://claude.ai";
+            else if (platform === 'gemini') url = "https://gemini.google.com";
+
+            setTimeout(() => {
+                window.open(url, '_blank');
+            }, 400);
+        }
+
+        function launchSandboxWithCurrentData() {
+            switchTab('sandbox');
+        }
+
+        /**
+         * INTERACTIVE AI TUTOR SIMULATION (SANDBOX)
+         */
+        function initSandboxSimulation() {
+            state.sandboxStep = 1;
+            state.sandboxAttempts = 0;
+            updateStepIndicators(1);
+
+            const topic = document.getElementById('select-topic').value === 'CUSTOM_TOPIC' 
+                ? (document.getElementById('input-custom-topic').value || 'Custom Topic')
+                : state.selectedTopic;
+            const name = document.getElementById('input-student-name').value || 'Student';
+            const interest = document.getElementById('input-interest').value || 'interests';
+
+            const log = document.getElementById('chat-conversation-log');
+            log.innerHTML = '';
+
+            // Inject AI Welcome & Step 1: The Lesson
+            const lessonContent = generateMockLesson(name, topic, interest);
+            appendChatMessage('ai', lessonContent);
+        }
+
+        function updateStepIndicators(stepNum) {
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById(`step-indicator-${i}`);
+                if (i <= stepNum) {
+                    el.classList.remove('opacity-50', 'bg-slate-950');
+                    el.classList.add('bg-net-600/20', 'border-net-500/40');
+                } else {
+                    el.classList.add('opacity-50', 'bg-slate-950');
+                    el.classList.remove('bg-net-600/20', 'border-net-500/40');
+                }
+            }
+        }
+
+        function generateMockLesson(name, topic, interest) {
+            let keyPoints = "";
+            let example = "";
+            let question = "";
+
+            if (topic.includes("MAC address")) {
+                keyPoints = `
+• <strong>Self- Learning (Ingress):</strong> Switches inspect incoming Ethernet frames and map the Source MAC address to the physical port it arrived on.
+• <strong>Selective Forwarding (Egress):</strong> If the Destination MAC is in the table, the switch sends the frame ONLY to that targeted port.
+• <strong>Flooding Unknowns:</strong> If the Destination MAC is NOT in the table (or is a Broadcast address), the switch floods the frame out all ports except the receiving one.`;
+                example = `Imagine a post office building where the mailroom notes down your office door number the first time you drop off a letter. Next time someone sends mail to you, they deliver it directly to your door instead of shouting your name in the hallway!`;
+                question = `You are hosting a <strong>${interest}</strong> gaming LAN party. Computer A sends a frame to Computer B for the first time. The switch doesn't have Computer B's MAC address in its table yet. What will the switch do with this frame, and what does it learn in the process?`;
+            } else if (topic.includes("hubs")) {
+                keyPoints = `
+• <strong>Layer 1 vs Layer 2:</strong> Hubs are physical layer (Layer 1) repeaters with zero intelligence. Switches are Data Link layer (Layer 2) devices that parse frames.
+• <strong>Collision Domains:</strong> Hubs create a single shared collision domain (only one device can transmit at a time). Switches give every port its own dedicated collision domain.
+• <strong>Bandwidth Allocation:</strong> Hubs share total bandwidth among all devices; switches provide full dedicated bandwidth per port.`;
+                example = `A hub is like a person shouting in a crowded room where only one person can talk at a time. A switch is like a private telephone switchboard connecting callers directly.`;
+                question = `In a <strong>${interest}</strong> setup using an old Ethernet Hub, two players press 'Action' at the exact same instant. What happens on the wire, and how would replacing the hub with a modern Ethernet Switch change this scenario?`;
+            } else {
+                keyPoints = `
+• <strong>Logical Segmentation:</strong> VLANs (Virtual LANs) partition a single physical switch into multiple isolated broadcast domains regardless of physical location.
+• <strong>Trunking & 802.1Q Tagging:</strong> A Trunk link carries traffic for multiple VLANs between switches by adding a 4-byte 802.1Q tag header to identify the VLAN ID.
+• <strong>Inter-VLAN Routing:</strong> Traffic cannot travel between different VLANs without a Layer 3 router or Layer 3 switch.`;
+                example = `Think of an apartment building with a shared hallway. VLANs are separate locked apartments inside the building—residents can't enter another apartment without a key (Router).`;
+                question = `Suppose you create two VLANs (VLAN 10 for <strong>${interest}</strong> streaming and VLAN 20 for guests). Player 1 on VLAN 10 tries to ping Player 2 on VLAN 20 attached to the same switch. Will the ping succeed without a router? Why or why not?`;
+            }
+
+            return `
+                <div class="space-y-4">
+                    <p class="font-bold text-net-300">Hello ${escapeHtml(name)}! Welcome to class. I am your personal networking tutor. Let's start with Step 1.</p>
+                    
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2">
+                        <div class="text-xs font-bold text-net-400 uppercase tracking-wider">Step 1: The Lesson — ${escapeHtml(topic)}</div>
+                        <div class="text-sm text-slate-200 space-y-1">${keyPoints}</div>
+                        <div class="text-xs text-slate-400 pt-2 border-t border-slate-800"><strong>Simple Example:</strong> ${example}</div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-net-500/30 rounded-xl p-4 space-y-2">
+                        <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Step 2: Interactive Practice</div>
+                        <p class="text-sm text-slate-100">${question}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function submitSandboxAnswer() {
+            const inputEl = document.getElementById('sandbox-user-input');
+            const answer = inputEl.value.trim();
+            if (!answer) return;
+
+            // Render User Message
+            appendChatMessage('user', escapeHtml(answer));
+            inputEl.value = '';
+
+            state.sandboxAttempts++;
+
+            // Process Socratic Response logic
+            setTimeout(() => {
+                const name = state.studentName;
+
+                if (state.sandboxAttempts === 1) {
+                    // Step 3: Socratic Hint First Attempt
+                    updateStepIndicators(3);
+                    const hintMessage = `
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+                                <i class="fa-solid fa-lightbulb text-base"></i> Step 3: Socratic Hint
+                            </div>
+                            <p class="text-sm text-slate-200">You're on the right track, but let's refine one key detail!</p>
+                            
+                            <div class="bg-amber-950/30 border border-amber-800/40 rounded-xl p-3.5 space-y-1.5 text-xs">
+                                <div class="font-bold text-amber-300">💡 Hint:</div>
+                                <div class="text-slate-300">Think about what the switch does with the <em>Source</em> MAC address when a frame enters a port versus how it decides where to send the frame based on the <em>Destination</em> MAC address.</div>
+                            </div>
+
+                            <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 space-y-1.5 text-xs">
+                                <div class="font-bold text-net-300">⚠️ Why it matters:</div>
+                                <div class="text-slate-300">Switches dynamically build their tables on the fly without manual setup. If they didn't flood unknown destinations, communication between new devices would fail!</div>
+                            </div>
+
+                            <p class="text-xs font-semibold text-net-400">Give it another try! How does the switch update its table while forwarding this frame?</p>
+                        </div>
+                    `;
+                    appendChatMessage('ai', hintMessage);
+                } else {
+                    // Step 4: Grade Report
+                    updateStepIndicators(4);
+                    const gradeMessage = `
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                                <i class="fa-solid fa-award text-base"></i> Step 4: Grade Report
+                            </div>
+
+                            <div class="bg-slate-900 border border-emerald-500/40 rounded-xl p-5 space-y-3">
+                                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                                    <div>
+                                        <div class="text-xs text-slate-400">Student Name</div>
+                                        <div class="text-base font-bold text-white">${escapeHtml(name)}</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-xs text-slate-400">Score</div>
+                                        <div class="text-2xl font-black text-emerald-400">10 / 10</div>
+                                    </div>
+                                </div>
+
+                                <div class="text-xs text-slate-300 leading-relaxed">
+                                    <strong class="text-emerald-300">Feedback:</strong> Outstanding job! You correctly identified that switches flood unknown unicast frames out all ports while learning the incoming source MAC address.
+                                </div>
+
+                                <div class="bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-slate-400">
+                                    <strong class="text-net-400">💡 Pro Tip for Exams:</strong> Always remember that switches learn MAC addresses from the <em>Source</em> field of incoming frames, but make forwarding decisions based on the <em>Destination</em> field!
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    appendChatMessage('ai', gradeMessage);
+                }
+            }, 600);
+        }
+
+        function appendChatMessage(sender, content) {
+            const log = document.getElementById('chat-conversation-log');
+            const wrapper = document.createElement('div');
+
+            if (sender === 'user') {
+                wrapper.className = "flex justify-end";
+                wrapper.innerHTML = `
+                    <div class="bg-net-600 text-white max-w-md rounded-2xl rounded-tr-none px-4 py-3 text-sm shadow-md">
+                        ${content}
+                    </div>
+                `;
+            } else {
+                wrapper.className = "flex gap-3 items-start";
+                wrapper.innerHTML = `
+                    <div class="w-8 h-8 rounded-xl bg-net-600 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-1">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 text-slate-200 rounded-2xl rounded-tl-none p-4 max-w-2xl text-sm space-y-2 shadow-md">
+                        ${content}
+                    </div>
+                `;
+            }
+
+            log.appendChild(wrapper);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function resetSandboxSimulation() {
+            initSandboxSimulation();
+            showToast("Sandbox reset to initial lesson step.", "success");
+        }
+
+        /**
+         * EDUCATOR PANEL
+         */
+        function renderEducatorTopics() {
+            const container = document.getElementById('educator-topics-list');
+            container.innerHTML = state.topics.map((t, idx) => `
+                <div class="flex items-center justify-between bg-slate-900 border border-slate-800 p-3 rounded-xl text-xs">
+                    <span class="text-slate-200 font-medium">${escapeHtml(t)}</span>
+                    <button onclick="deleteEducatorTopic(${idx})" class="text-rose-400 hover:text-rose-300 px-2 py-1">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function deleteEducatorTopic(index) {
+            if (state.topics.length <= 1) {
+                showToast("You must keep at least one topic!", "error");
+                return;
+            }
+            state.topics.splice(index, 1);
+            state.selectedTopic = state.topics[0];
+            renderTopicDropdown();
+            renderEducatorTopics();
+            renderPrompt();
+            showToast("Topic removed");
+        }
+
+        function openAddTopicModal() {
+            document.getElementById('modal-add-topic').classList.remove('hidden');
+        }
+
+        function closeAddTopicModal() {
+            document.getElementById('modal-add-topic').classList.add('hidden');
+            document.getElementById('new-topic-title').value = '';
+        }
+
+        function handleAddTopic(e) {
+            e.preventDefault();
+            const title = document.getElementById('new-topic-title').value.trim();
+            if (!title) return;
+
+            state.topics.push(title);
+            state.selectedTopic = title;
+
+            renderTopicDropdown();
+            renderEducatorTopics();
+            renderPrompt();
+            closeAddTopicModal();
+            showToast(`Added topic: "${title}"`);
+        }
+
+        function saveEducatorTemplate() {
+            state.template = document.getElementById('educator-template-editor').value;
+            renderPrompt();
+        }
+
+        function resetTemplateToDefault() {
+            state.template = DEFAULT_TEMPLATE;
+            document.getElementById('educator-template-editor').value = DEFAULT_TEMPLATE;
+            renderPrompt();
+            showToast("Master template reset to original default.");
+        }
+
+        /**
+         * UTILITIES
+         */
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.textContent = message;
+
+            if (type === 'error') {
+                toastIcon.className = 'w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-sm font-bold';
+                toastIcon.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            } else {
+                toastIcon.className = 'w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm font-bold';
+                toastIcon.innerHTML = '<i class="fa-solid fa-check"></i>';
+            }
+
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
