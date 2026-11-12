@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Networking Socratic Prompt Generator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        net: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between selection:bg-net-500 selection:text-white">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 ease-out bg-slate-800 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 pointer-events-none">
+        <div id="toast-icon" class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm font-bold">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div>
+            <div id="toast-title" class="text-xs font-bold text-slate-200">Success</div>
+            <div id="toast-message" class="text-xs text-slate-400">Prompt copied to clipboard!</div>
+        </div>
+    </div>
+
+    <!-- Header Navigation (No Tabs) -->
+    <header class="bg-slate-950/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand Title -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-net-600 to-cyan-400 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-net-600/30">
+                        <i class="fa-solid fa-network-wired"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white text-base sm:text-lg leading-tight flex items-center gap-2">
+                            Networking Socratic Prompt Generator - Ethernet Switching
+                        </h1>
+                        <p class="text-xs text-slate-400">Introduction to Networking CSIS-365</p>
+                    </div>
+                </div>
+
+                <!-- Course Tag Badge -->
+                <span class="hidden sm:inline-flex items-center gap-1.5 bg-net-500/10 text-net-400 text-xs px-3 py-1 rounded-full border border-net-500/20 font-medium">
+                    <i class="fa-solid fa-graduation-cap"></i> Top-Down Networking
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+            
+            <!-- LEFT PANEL: Student Input Form (5 cols) -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-xl space-y-5">
+                    <div class="border-b border-slate-800 pb-4">
+                        <h2 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-user-graduate text-net-400"></i> Student Inputs
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">Fill out your details to customize your AI tutor prompt.</p>
+                    </div>
+
+                    <!-- 1. Student Name -->
+                    <div>
+                        <label for="input-student-name" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                            Student Name <span class="text-rose-400">*</span>
+                        </label>
+                        <div class="relative">
+                            <i class="fa-solid fa-signature absolute left-3.5 top-3 text-slate-500 text-sm"></i>
+                            <input type="text" id="input-student-name" value="<your name>" oninput="renderPrompt()" placeholder="e.g. Alex Rivera" class="w-full bg-slate-900 border border-slate-700 focus:border-net-500 focus:ring-1 focus:ring-net-500 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white outline-none transition-all placeholder:text-slate-600">
+                        </div>
+                    </div>
+
+                    <!-- 2. Networking Topic Selection -->
+                    <div>
+                        <label for="select-topic" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                            Networking Topic Selection <span class="text-rose-400">*</span>
+                        </label>
+                        <div class="relative">
+                            <select id="select-topic" onchange="renderPrompt()" class="w-full bg-slate-900 border border-slate-700 focus:border-net-500 focus:ring-1 focus:ring-net-500 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none transition-all appearance-none cursor-pointer">
+                                <option value="Ethernet switching and MAC address tables">Ethernet switching and MAC address tables</option>
+                                <option value="Ethernet switching and how it differs from hubs">Ethernet switching and how it differs from hubs</option>
+                                <option value="VLAN and Trunking">VLAN and Trunking</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down absolute right-3.5 top-3.5 text-slate-500 pointer-events-none text-xs"></i>
+                        </div>
+                    </div>
+
+                    <!-- 3. Optional Interest / Hobby -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="input-interest" class="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                                Personal Interest / Hobby
+                            </label>
+                            <span class="text-[10px] text-slate-500 uppercase font-semibold">Optional</span>
+                        </div>
+                        <div class="relative">
+                            <i class="fa-solid fa-gamepad absolute left-3.5 top-3 text-slate-500 text-sm"></i>
+                            <input type="text" id="input-interest" value="video gaming" oninput="renderPrompt()" placeholder="e.g. Gaming, Basketball, Baking, Photography" class="w-full bg-slate-900 border border-slate-700 focus:border-net-500 focus:ring-1 focus:ring-net-500 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white outline-none transition-all placeholder:text-slate-600">
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1.5">Your AI tutor will build interactive scenario questions tailored to your interest!</p>
+                    </div>
+                </div>
+
+                <!-- Student Instructions Box -->
+                <div class="bg-slate-950/60 border border-slate-800 p-5 rounded-2xl text-xs text-slate-300 space-y-2">
+                    <div class="font-bold text-net-300 flex items-center gap-2 text-sm">
+                        <i class="fa-solid fa-circle-info text-net-400"></i> Instructions for Students:
+                    </div>
+                    <ol class="list-decimal list-inside space-y-1 text-slate-400 leading-relaxed">
+                        <li>Enter your name, choose your topic, and add an optional hobby.</li>
+                        <li>Click <strong>Copy Prompt</strong> (or click one of the AI buttons).</li>
+                        <li>Paste the prompt into <strong>ChatGPT</strong>, <strong>Claude</strong>, or <strong>Gemini</strong>.</li>
+                        <li>Answer the tutor's questions step-by-step to complete the lesson!</li>
+                    </ol>
+                </div>
+
+            </div>
+
+            <!-- RIGHT PANEL: Generated Prompt Preview & Copy Actions (7 cols) -->
+            <div class="lg:col-span-7 space-y-6 flex flex-col">
+                
+                <div class="bg-slate-950 rounded-2xl border border-slate-800 shadow-xl flex-1 flex flex-col overflow-hidden">
+                    
+                    <!-- Output Header Bar -->
+                    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between flex-wrap gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <h2 class="text-xs font-bold tracking-wider uppercase text-slate-200">Generated Prompt Preview</h2>
+                        </div>
+
+                        <button onclick="copyPromptToClipboard()" class="bg-net-600 hover:bg-net-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-net-600/30 transition-all active:scale-95">
+                            <i class="fa-regular fa-copy"></i> Copy Prompt
+                        </button>
+                    </div>
+
+                    <!-- Prompt Display Area -->
+                    <div class="p-6 flex-1 flex flex-col justify-between bg-slate-950 font-sans">
+                        <div id="prompt-preview-rendered" class="bg-slate-900/90 border border-slate-800 p-5 rounded-xl text-sm text-slate-200 leading-relaxed whitespace-pre-wrap select-all font-mono">
+                            <!-- Dynamically generated via JavaScript -->
+                        </div>
+
+                        <!-- Footer stats -->
+                        <div class="mt-4 flex items-center justify-between text-xs text-slate-500 pt-3 border-t border-slate-900">
+                            <span id="prompt-char-count">0 characters</span>
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-emerald-500"></i> Socratic Method Prompt</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick AI Launch Hub -->
+                <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 shadow-xl">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
+                        <span><i class="fa-solid fa-rocket text-net-400 mr-1.5"></i> Copies Prompt & Opens AI Tutor.  Once you are in the AI, paste the prompt.</span>
+                    </h3>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <button onclick="launchExternalAI('chatgpt')" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-3 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold text-slate-200 transition-all group">
+                            <i class="fa-solid fa-bolt text-emerald-400 group-hover:scale-110 transition-transform"></i> ChatGPT
+                        </button>
+                        <button onclick="launchExternalAI('claude')" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-3 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold text-slate-200 transition-all group">
+                            <i class="fa-solid fa-brain text-amber-400 group-hover:scale-110 transition-transform"></i> Claude
+                        </button>
+                        <button onclick="launchExternalAI('gemini')" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-3 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold text-slate-200 transition-all group">
+                            <i class="fa-solid fa-sparkles text-cyan-400 group-hover:scale-110 transition-transform"></i> Gemini
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500">
+        Networking Course Socratic Prompt Tool &bull; Designed for LMS & Canvas Embedding
+    </footer>
+
+    <!-- JavaScript Engine -->
+    <script>
+        // DOM Initializer
+        window.addEventListener('DOMContentLoaded', () => {
+            renderPrompt();
+        });
+
+        // Prompt Merger Logic
+        function buildPromptString() {
+            const nameInput = document.getElementById('input-student-name').value.trim();
+            const name = nameInput.length > 0 ? nameInput : "<name>";
+            
+            const topic = document.getElementById('select-topic').value;
+            const interest = document.getElementById('input-interest').value.trim();
+            const interestClause = interest.length > 0 ? ` (such as ${interest})` : "";
+
+            return `I am ${name}, a beginner in an introductory top-down networking college course. 
+Please act as my personal networking tutor and help me learn about ${topic}.
+
+Follow these instructions in order:
+
+1. The Lesson: Give me a short bullet-list summary of the three most important ideas, with one simple example.
+
+2. Interactive Practice: Ask me one networking/data-communications question using a scenario based on my interest${interestClause} and wait for my answer. Double check the proposed solution before identifying if the answer is correct or incorrect.
+
+3. The Socratic Method: If I make a mistake, do not give me the answer. Give me a 'Hint' and a 'Why it matters' explanation, then let me try again. Allow up to three attempts.
+
+4. Grade Report: After I solve the question, show me a 'Grade Report' with my name and a score out of 10 points, plus one 'Pro Tip' for improving my answer.
+
+Constraints: Only use concepts from a typical introductory top-down networking textbook. Explain any new concept in a way a beginner can follow.
+
+Please start with the Lesson.`;
+        }
+
+        // Live Render Prompt
+        function renderPrompt() {
+            const promptText = buildPromptString();
+            const previewEl = document.getElementById('prompt-preview-rendered');
+            previewEl.textContent = promptText;
+            document.getElementById('prompt-char-count').textContent = `${promptText.length} characters`;
+        }
+
+        // Copy Function with Iframe Clipboard Fallback
+        function copyPromptToClipboard() {
+            const promptText = buildPromptString();
+            
+            // Standard Clipboard API with document.execCommand fallback for LMS iFrames
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(promptText)
+                    .then(() => showToast("Prompt copied to clipboard!"))
+                    .catch(() => fallbackCopy(promptText));
+            } else {
+                fallbackCopy(promptText);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast("Prompt copied to clipboard!");
+            } catch (err) {
+                showToast("Failed to copy text automatically", "error");
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+
+        // Launch AI and copy prompt simultaneously
+        function launchExternalAI(platform) {
+            copyPromptToClipboard();
+            
+            let url = "";
+            if (platform === 'chatgpt') url = "https://chatgpt.com";
+            else if (platform === 'claude') url = "https://claude.ai";
+            else if (platform === 'gemini') url = "https://gemini.google.com";
+
+            setTimeout(() => {
+                window.open(url, '_blank');
+            }, 300);
+        }
+
+        // Toast Feedback System
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.textContent = message;
+
+            if (type === 'error') {
+                toastIcon.className = 'w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-sm font-bold';
+                toastIcon.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            } else {
+                toastIcon.className = 'w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm font-bold';
+                toastIcon.innerHTML = '<i class="fa-solid fa-check"></i>';
+            }
+
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
